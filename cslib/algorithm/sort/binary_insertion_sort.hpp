@@ -1,15 +1,13 @@
 #ifndef CSLIB_ALGORITHM_SORT_INSERTION_SORT_HPP
 #define CSLIB_ALGORITHM_SORT_INSERTION_SORT_HPP
 
-#include <algorithm>
-#include <iterator>
-#include <type_traits>
+#include <cslib/algorithm/search/binary_search.hpp>
 
 namespace cslib {
 namespace algorithm
 {
 
-	/* Name: Insertion sort
+	/* Name: Binary insertion sort
 	 * Runtime complexity: O(n^2)
 	 * Space complexity: O(1)
 	 *
@@ -24,17 +22,18 @@ namespace algorithm
 			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
 			typename CompareT = std::less<ValueT>::value_type>
 	>
-	void insertion_sort(IteratorT first, IteratorT last, CompareT compare = CompareT())
+	void binary_insertion_sort(IteratorT first, IteratorT last, CompareT compare = CompareT())
 	{
 		if (first == last)
 			return;
 
-		IteratorT i, j;
+		IteratorT i, j, location;
 		for (i = first + 1; i != last; ++i)
 		{
 			j = i - 1;
+			location = binary_search(first, i, *i, compare);
 
-			while (j >= first && *j > *i)
+			while (j >= location)
 			{
 				*(j + 1) = *j;
 				--j;
