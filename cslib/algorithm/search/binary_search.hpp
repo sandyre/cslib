@@ -1,6 +1,7 @@
 #ifndef CSLIB_ALGORITHM_SEARCH_BINARY_SEARCH_HPP
 #define CSLIB_ALGORITHM_SEARCH_BINARY_SEARCH_HPP
 
+#include <algorithm>
 #include <iterator>
 #include <type_trait>
 
@@ -20,9 +21,10 @@ namespace algorithm
 	template <
 			typename IteratorT,
 			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
-			typename ValuePassingT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type
+			typename ValuePassingT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type,
+			typename CompareT = std::less<ValueT>::value_type>
 	>
-	IteratorT binary_search(IteratorT first, IteratorT last, ValuePassingT value)
+	IteratorT binary_search(IteratorT first, IteratorT last, ValuePassingT value, CompareT compare = CompareT())
 	{
 		if (first == last)
 			return last;
@@ -36,7 +38,7 @@ namespace algorithm
 			if (currentVal == value)
 				return current;
 
-			if (currentVal > value)
+			if (!compare(currentVal, value))
 				end = current;
 			else
 				begin = current;
