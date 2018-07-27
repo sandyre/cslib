@@ -42,37 +42,44 @@ namespace data_structure
 	template < typename ValueT >
 	class stack
 	{
-		using PassingValueT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type;
+	public:
+		using value_type			= ValueT;
+		using reference				= ValueT&;
+		using const_reference		= const ValueT&;
+		using size_type				= size_t;
+
+	private:
+		using PassingValueT = typename std::conditional<std::is_fundamental<value_type>::value, value_type, const_reference>::type;
 
 	private:
 		dynamic_array<ValueT>	_container;
-		size_t					_currentIndex;
+		size_t					_endIndex;
 
 	public:
 		stack()
-			:	_currentIndex()
+			:	_endIndex()
 		{ }
 
-		ValueT& top()
-		{ return _container[_currentIndex]; }
+		reference top()
+		{ return _container[_endIndex - 1]; }
 
 		void push(PassingValueT value)
 		{
 			_container.push_back(value);
-			++_currentIndex;
+			++_endIndex;
 		}
 
 		void pop()
 		{
 			_container.pop_back();
-			--_currentIndex;
+			--_endIndex;
 		}
 
-		size_t size() const
-		{ return _currentIndex; }
+		size_type size() const
+		{ return _endIndex; }
 
 		bool empty() const
-		{ return _currentIndex; }
+		{ return !size(); }
 	};
 
 }}

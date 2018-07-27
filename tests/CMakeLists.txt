@@ -7,6 +7,7 @@ SET(SOURCES
 	algorithm/insertion_sort.cpp
 
 	data_structure/dynamic_array.cpp
+	data_structure/stack.cpp
 )
 
 if(BUILD_TESTS)
