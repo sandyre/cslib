@@ -24,6 +24,7 @@
 // SOFTWARE.
 
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 
 namespace cslib {
@@ -56,34 +57,36 @@ namespace data_structure
 		using size_type				= size_t;
 
 	private:
-		using PassingValueT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type;
-		using StorageT = void*;
+		using PassingValueT = typename std::conditional<std::is_fundamental<value_type>::value, ValueT, const value_type&>::type;
+		using StorageT = char;
+		using StoragePointerT = char*;
 
 	private:
-		StorageT		_storage;
+		StoragePointerT	_storage;
 		size_type		_capacity;
 		size_type		_size;
 
 	public:
 		dynamic_array()
-			:	_storage(std::nullptr),
-				_capacity(),
+			:	_storage(new StorageT(4 * sizeof(value_type))),
+				_capacity(4),
 				_size()
 		{ }
 
-		~dynamic_array()
-		{ delete _storage; }
-
-		explicit dynamic_array(size_t initialSize)
-			:	_storage(new ValueT[initialSize]),
+		explicit dynamic_array(size_t initialSize, PassingValueT filler = value_type())
+			:	_storage(new StorageT[initialSize * sizeof(value_type)]),
 				_capacity(initialSize),
 				_size(initialSize)
-		{ }
+		{ std::fill(begin(), end(), filler); }
+
+		~dynamic_array()
+		{ clear(); }
 
 		void push_back(PassingValueT value)
 		{
 			ensure_capacity(_size + 1);
-			new(_storage[size() * sizeof(ValueT)]) ValueT(value);
+			new(_storage + size() * sizeof(ValueT)) ValueT(value);
+			++_size;
 		}
 
 		void pop_back()
@@ -92,16 +95,26 @@ namespace data_structure
 			--_size;
 		}
 
-		reference at(size_type index)			{ return _storage[index]; }
+		reference front()	{ return at(0); }
+		reference back()	{ return at(size() - 1); }
+
+		reference at(size_type index)			{ return *reinterpret_cast<pointer>(_storage + index * sizeof(value_type)); }
 		reference operator[](size_type index)	{ return at(index); }
 
-		iterator begin() const			{ return _storage; }
-		iterator end() const			{ return _storage + size(); }
+		iterator begin() const			{ return reinterpret_cast<iterator>(_storage); }
+		iterator end() const			{ return reinterpret_cast<iterator>(_storage + size() * sizeof(value_type)); }
 		const_iterator cbegin() const	{ return begin(); }
 		const_iterator cend() const		{ return end(); }
 
-		void clear()			{ _size = 0; }
-		size_type size() const	{ return _size; }
+		void clear()
+		{
+			_size = 0;
+			std::for_each(begin(), end(), std::bind(&dynamic_array::destructor_caller, this, std::placeholders::_1));
+		}
+
+		size_type size() const		{ return _size; }
+		size_type capacity() const	{ return _capacity; }
+		bool empty() const			{ return !size(); }
 
 	private:
 		void ensure_capacity(size_t newSize)
@@ -109,7 +122,7 @@ namespace data_structure
 			if (newSize >= _capacity)
 			{
 				const size_type newCapacity = _capacity * static_cast<size_type>(std::ceil(std::log2(newSize / _capacity)));
-				StorageT newStorage = ::operator new(newCapacity);
+				StoragePointerT newStorage = new StorageT[newCapacity];
 				std::move(_storage, _storage + _size * sizeof(ValueT), newStorage);
 				delete [] _storage;
 
@@ -118,6 +131,9 @@ namespace data_structure
 				_size = newSize;
 			}
 		}
+
+		void destructor_caller(value_type& element)
+		{ element.~value_type(); }
 	};
 
 }}

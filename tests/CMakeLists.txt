@@ -5,6 +5,8 @@ SET(SOURCES
 	algorithm/linear_search.cpp
 
 	algorithm/insertion_sort.cpp
+
+	data_structure/dynamic_array.cpp
 )
 
 if(BUILD_TESTS)
