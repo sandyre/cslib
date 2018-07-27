@@ -11,12 +11,20 @@ namespace algorithm
 	/* Name: Linear search
 	 * Runtime complexity: O(n)
 	 * Space complexity: O(1)
-	 *
-	 * TODO: add check that input iterator is ForwardIterator
 	 */
 
-	template < typename IteratorT, typename ValueT = typename std::iterator_traits<IteratorT>::value_type >
-	IteratorT linear_search(IteratorT first, IteratorT last, typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type value)
+	template <
+			typename IteratorT,
+			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
+			typename PassingValueT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type,
+			typename = typename std::enable_if<
+				std::is_convertible<
+						typename std::iterator_traits<IteratorT>::iterator_category,
+						typename std::input_iterator_tag
+				>::value
+			>::type
+	>
+	IteratorT linear_search(IteratorT first, IteratorT last, PassingValueT value)
 	{
 		for (IteratorT iter = first; iter != last; ++iter)
 			if (*iter == value)
