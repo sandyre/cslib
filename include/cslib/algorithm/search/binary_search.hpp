@@ -14,15 +14,12 @@ namespace algorithm
 	 * Space complexity: O(1)
 	 *
 	 * Interesting fact: it works only on a sorted input array. Returns garbage otherwise.
-	 *
-	 * TODO: add check that input iterator is RandomAccessIterator
 	 */
 
 	template <
 			typename IteratorT,
 			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
 			typename PassingValueT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type,
-			typename CompareT = typename std::less_equal<ValueT>,
 			typename = typename std::enable_if<
 				std::is_convertible<
 						typename std::iterator_traits<IteratorT>::iterator_category,
@@ -30,22 +27,23 @@ namespace algorithm
 				>::value
 			>::type
 	>
-	IteratorT binary_search(IteratorT first, IteratorT last, PassingValueT value, CompareT compare = CompareT())
+	IteratorT binary_search(IteratorT first, IteratorT last, PassingValueT value)
 	{
 		if (first == last)
 			return last;
 
-		IteratorT begin = first, end = last, current;
+		IteratorT begin = first, end = last, middle;
 		while (begin != end)
 		{
-			current = begin + std::distance(begin, end) / 2;
-			if (*current == value)
-				return current;
+			middle = begin + std::distance(begin, end) / 2;
+			PassingValueT currentValue = *middle;
 
-			if (!compare(*current, value))
-				end = current;
+			if (value < currentValue)
+				end = middle;
+			else if (value > currentValue)
+				begin = middle + 1;
 			else
-				begin = current;
+				return middle;
 		}
 
 		return last;

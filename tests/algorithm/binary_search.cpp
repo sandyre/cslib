@@ -16,7 +16,7 @@ TEST(binary_search, empty_input)
 
 TEST(binary_search, simple_input)
 {
-	DefaultContainer<int> container { 0, 2, 5, 10, 30, 40 };
+	DefaultContainer<int> container { 0, 2, 5, 10, 30, 40, 50 };
 
 	EXPECT_TRUE(cslib::algorithm::binary_search(container.begin(), container.end(), 5) == container.begin() + 2);
 	EXPECT_TRUE(cslib::algorithm::binary_search(container.begin(), container.end(), 8) == container.end());
