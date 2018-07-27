@@ -14,10 +14,12 @@ if(BUILD_TESTS)
 	)
 	ExternalProject_Get_Property(gtest source_dir binary_dir)
 
-	message(${binary_dir})
+	message(${CMAKE_SOURCE_DIR})
+
 	add_executable(cslib_tests ${SOURCES})
 	add_dependencies(cslib_tests gtest)
 	include_directories(${source_dir}/googletest/include)
+	include_directories(${CMAKE_SOURCE_DIR}/include)
 	target_link_libraries(cslib_tests ${binary_dir}/googlemock/gtest/libgtest.a)
 	target_link_libraries(cslib_tests ${binary_dir}/googlemock/gtest/libgtest_main.a)
 
