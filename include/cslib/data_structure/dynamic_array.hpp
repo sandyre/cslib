@@ -57,9 +57,9 @@ namespace data_structure
 		using size_type				= size_t;
 
 	private:
-		using PassingValueT = typename std::conditional<std::is_fundamental<value_type>::value, ValueT, const value_type&>::type;
+		using PassingValueT = typename std::conditional<std::is_fundamental<value_type>::value, value_type, const value_type&>::type;
 		using StorageT = char;
-		using StoragePointerT = char*;
+		using StoragePointerT = StorageT*;
 
 	private:
 		StoragePointerT	_storage;
@@ -85,13 +85,13 @@ namespace data_structure
 		void push_back(PassingValueT value)
 		{
 			ensure_capacity(_size + 1);
-			new(_storage + size() * sizeof(ValueT)) ValueT(value);
+			new(_storage + size() * sizeof(value_type)) value_type(value);
 			++_size;
 		}
 
 		void pop_back()
 		{
-			reinterpret_cast<pointer>(_storage[size() - 1 * sizeof(ValueT)])->~ValueT();
+			reinterpret_cast<pointer>(_storage[size() - 1 * sizeof(value_type)])->~value_type();
 			--_size;
 		}
 
@@ -123,7 +123,7 @@ namespace data_structure
 			{
 				const size_type newCapacity = _capacity * static_cast<size_type>(std::ceil(std::log2(newSize / _capacity)));
 				StoragePointerT newStorage = new StorageT[newCapacity];
-				std::move(_storage, _storage + _size * sizeof(ValueT), newStorage);
+				std::move(_storage, _storage + _size * sizeof(value_type), newStorage);
 				delete [] _storage;
 
 				_storage = newStorage;
