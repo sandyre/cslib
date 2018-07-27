@@ -1,9 +1,9 @@
 #ifndef CSLIB_ALGORITHM_SEARCH_BINARY_SEARCH_HPP
 #define CSLIB_ALGORITHM_SEARCH_BINARY_SEARCH_HPP
 
-#include <algorithm>
+#include <functional>
 #include <iterator>
-#include <type_trait>
+#include <type_traits>
 
 namespace cslib {
 namespace algorithm
@@ -21,30 +21,36 @@ namespace algorithm
 	template <
 			typename IteratorT,
 			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
-			typename ValuePassingT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type,
-			typename CompareT = std::less<ValueT>::value_type>
+			typename PassingValueT = typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type,
+			typename CompareT = typename std::less_equal<ValueT>,
+			typename = typename std::enable_if<
+				std::is_convertible<
+						typename std::iterator_traits<IteratorT>::iterator_category,
+						typename std::random_access_iterator_tag
+				>::value
+			>::type
 	>
-	IteratorT binary_search(IteratorT first, IteratorT last, ValuePassingT value, CompareT compare = CompareT())
+	IteratorT binary_search(IteratorT first, IteratorT last, PassingValueT value, CompareT compare = CompareT())
 	{
 		if (first == last)
 			return last;
 
 		IteratorT begin = first, end = last, current;
-		do
+		while (begin != end)
 		{
 			current = begin + std::distance(begin, end) / 2;
-			ValuePassingT currentVal = *current;
-
-			if (currentVal == value)
+			if (*current == value)
 				return current;
 
-			if (!compare(currentVal, value))
+			if (!compare(*current, value))
 				end = current;
 			else
 				begin = current;
-		} while (begin != end)
+		}
 
 		return last;
 	}
 
 }}
+
+#endif
