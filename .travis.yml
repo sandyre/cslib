@@ -1,0 +1,16 @@
+language: cpp
+dist: trusty
+compiler:
+    - gcc
+    - clang
+os:
+    - linux
+script:
+    - mkdir build
+    - cd build
+    - cmake -DBUILD_TESTS=ON ..
+    - cmake --build . --target all -- -j4
+branches:
+    only:
+        - master
+        - dev
