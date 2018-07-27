@@ -14,6 +14,7 @@ TEST(linear_search, empty_input)
 	EXPECT_TRUE(cslib::algorithm::linear_search(container.begin(), container.end(), 5) == container.end());
 }
 
+
 TEST(linear_search, simple_input)
 {
 	DefaultContainer<int> container { 0, 10, 5, 4, 3 };

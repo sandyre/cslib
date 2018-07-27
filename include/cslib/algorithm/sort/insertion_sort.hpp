@@ -23,7 +23,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <algorithm>
 #include <iterator>
 #include <type_traits>
 
@@ -34,17 +33,18 @@ namespace algorithm
 	/* Name: Insertion sort
 	 * Runtime complexity: O(n^2)
 	 * Space complexity: O(1)
-	 *
-	 * Interesting fact:
-	 * If CompareT::operator() does strong check (i.e. < OR >), this algorithm is stable. Overwise it's not.
-	 *
-	 * TODO: iterator must be RandomAccessIterator, add this check
 	 */
 
 	template <
 			typename IteratorT,
 			typename ValueT = typename std::iterator_traits<IteratorT>::value_type,
-			typename CompareT = std::less<ValueT>::value_type>
+			typename CompareT = typename std::less<ValueT>,
+			typename = typename std::enable_if<
+				std::is_convertible<
+						typename std::iterator_traits<IteratorT>::iterator_category,
+						typename std::random_access_iterator_tag
+				>::value
+			>::type
 	>
 	void insertion_sort(IteratorT first, IteratorT last, CompareT compare = CompareT())
 	{
@@ -56,7 +56,7 @@ namespace algorithm
 		{
 			j = i - 1;
 
-			while (j >= first && *j > *i)
+			while (j >= first && !compare(*j, *i))
 			{
 				*(j + 1) = *j;
 				--j;

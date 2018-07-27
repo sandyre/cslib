@@ -3,6 +3,8 @@ option(BUILD_TESTS "Build unit tests" OFF)
 SET(SOURCES
 	algorithm/binary_search.cpp
 	algorithm/linear_search.cpp
+
+	algorithm/insertion_sort.cpp
 )
 
 if(BUILD_TESTS)
