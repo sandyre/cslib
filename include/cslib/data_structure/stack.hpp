@@ -75,6 +75,12 @@ namespace data_structure
 			--_endIndex;
 		}
 
+		bool operator==(const stack& other) const
+		{ return _container == other._container; }
+
+		bool operator!=(const stack& other) const
+		{ return !operator==(other); }
+
 		size_type size() const
 		{ return _endIndex; }
 

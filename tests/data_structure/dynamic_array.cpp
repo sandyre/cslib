@@ -57,3 +57,18 @@ TEST(dynamic_array, access)
 	ASSERT_EQ(container.front(), 5);
 	ASSERT_EQ(container.back(), 10);
 }
+
+
+TEST(dynamic_array, comparison)
+{
+	cslib::data_structure::dynamic_array<int> containerA, containerB;
+
+	containerA.push_back(5);
+	containerA.push_back(15);
+	containerA.push_back(20);
+
+	containerB.push_back(7);
+	containerB.push_back(30);
+
+	ASSERT_NE(containerA, containerB);
+}

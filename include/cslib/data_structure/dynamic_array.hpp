@@ -23,6 +23,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <stdexcept>
@@ -115,6 +116,17 @@ namespace data_structure
 		size_type size() const		{ return _size; }
 		size_type capacity() const	{ return _capacity; }
 		bool empty() const			{ return !size(); }
+
+		bool operator==(const dynamic_array& other) const
+		{
+			if (size() != other.size())
+				return false;
+
+			return std::equal(begin(), end(), other.begin());
+		}
+
+		bool operator!=(const dynamic_array& other) const
+		{ return !operator==(other); }
 
 	private:
 		void ensure_capacity(size_t newSize)
