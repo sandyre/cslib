@@ -87,7 +87,7 @@ namespace data_structure
 
 		reference at(key_passing_type key)
 		{
-			bst_node* node = find_node(_root, key);
+			bst_node* node = find_node_in_subtree(_root, key);
 			return node->_value;
 		}
 
@@ -155,7 +155,7 @@ namespace data_structure
 
 		void remove_node_from_subtree(bst_node* subtree_root, key_passing_type key)
 		{
-			bst_node* node_to_remove = find_node(subtree_root, key);
+			bst_node* node_to_remove = find_node_in_subtree(subtree_root, key);
 			bst_node* parent_node = node_to_remove->_parent;
 
 			switch (const size_t number_of_child = static_cast<bool>(node_to_remove->_left_child) + static_cast<bool>(node_to_remove->_right_child))
