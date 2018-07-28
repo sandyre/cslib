@@ -104,6 +104,8 @@ namespace data_structure
 		iterator begin() const;
 		iterator end() const;
 
+		iterator find(key_passing_type key) const;
+
 		void insert(key_passing_type key, value_passing_type value)
 		{
 			if (!_root)
@@ -272,6 +274,11 @@ namespace data_structure
 	template < typename KeyT, typename ValueT >
 	typename binary_search_tree<KeyT, ValueT>::iterator binary_search_tree<KeyT, ValueT>::end() const
 	{ return iterator(nullptr); }
+
+
+	template < typename KeyT, typename ValueT >
+	typename binary_search_tree<KeyT, ValueT>::iterator binary_search_tree<KeyT, ValueT>::find(binary_search_tree<KeyT, ValueT>::key_passing_type key) const
+	{ return iterator(find_node_in_subtree(_root, key)); }
 
 }}
 
