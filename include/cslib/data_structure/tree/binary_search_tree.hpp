@@ -58,6 +58,7 @@ namespace data_structure
 			key_type		_key;
 			value_type		_value;
 
+			bst_node*		_parent;
 			bst_node*		_left_child;
 			bst_node*		_right_child;
 
@@ -65,10 +66,12 @@ namespace data_structure
 			bst_node(
 					key_passing_type key,
 					value_passing_type value,
+					bst_node* parent = nullptr,
 					bst_node* left_child = nullptr,
 					bst_node* right_child = nullptr)
 				:	_key(key),
 					_value(value),
+					_parent(parent),
 					_left_child(left_child),
 					_right_child(right_child)
 			{ }
@@ -84,7 +87,7 @@ namespace data_structure
 
 		reference at(key_passing_type key)
 		{
-			bst_node* node = find_node(key);
+			bst_node* node = find_node(_root, key);
 			return node->_value;
 		}
 
@@ -110,7 +113,7 @@ namespace data_structure
 				{
 					if (!current->_left_child)
 					{
-						current->_left_child = new bst_node(key, value);
+						current->_left_child = new bst_node(key, value, current);
 						return;
 					}
 					else
@@ -120,7 +123,7 @@ namespace data_structure
 				{
 					if (!current->_right_child)
 					{
-						current->_right_child = new bst_node(key, value);
+						current->_right_child = new bst_node(key, value, current);
 						return;
 					}
 					else
@@ -129,24 +132,74 @@ namespace data_structure
 			}
 		}
 
-		void remove(key_passing_type key);
+		void remove(key_passing_type key)
+		{ remove_node_from_subtree(_root, key); }
 
 	private:
-		bst_node* find_node(key_passing_type key)
+		bst_node* find_node_in_subtree(bst_node* subtree_root, key_passing_type key)
 		{
-			bst_node* current = _root;
+			bst_node* current = subtree_root;
 			while (current)
 			{
 				if (current->_key == key)
 					break;
 
 				if (current->_key > key)
-					current = current->_right_child;
-				else
 					current = current->_left_child;
+				else
+					current = current->_right_child;
 			}
 
 			return current;
+		}
+
+		void remove_node_from_subtree(bst_node* subtree_root, key_passing_type key)
+		{
+			bst_node* node_to_remove = find_node(subtree_root, key);
+			bst_node* parent_node = node_to_remove->_parent;
+
+			switch (const size_t number_of_child = static_cast<bool>(node_to_remove->_left_child) + static_cast<bool>(node_to_remove->_right_child))
+			{
+			case 0:
+			{
+				bst_node* node_to_attach = nullptr;
+				if (parent_node->_left_child == node_to_remove)
+					parent_node->_left_child = node_to_attach;
+				else
+					parent_node->_right_child = node_to_attach;
+
+				delete node_to_remove;
+				break;
+			}
+			case 1:
+			{
+				bst_node* node_to_attach = nullptr;
+				if (node_to_attach = node_to_remove->_left_child)
+					node_to_attach->_parent = parent_node;
+				else if (node_to_attach = node_to_remove->_right_child)
+					node_to_attach->_parent = parent_node;
+				break;
+
+				delete node_to_remove;
+			}
+			default:
+			{
+				bst_node* min_node_in_right_subtree = node_to_remove->_right_child;
+				while (true)
+				{
+					if (min_node_in_right_subtree->_left_child)
+						min_node_in_right_subtree = min_node_in_right_subtree->_left_child;
+					else
+						break;
+				}
+
+				node_to_remove->_key = min_node_in_right_subtree->_key;
+				node_to_remove->_value = min_node_in_right_subtree->_value;
+
+				remove_node_from_subtree(node_to_remove->_right_child, node_to_remove->_key);
+				break;
+			}
+			}
 		}
 	};
 
