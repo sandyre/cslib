@@ -5,6 +5,7 @@ SET(SOURCES
 	algorithm/linear_search.cpp
 
 	algorithm/insertion_sort.cpp
+	algorithm/tree_sort.cpp
 
 	data_structure/binary_search_tree.cpp
 	data_structure/dynamic_array.cpp
