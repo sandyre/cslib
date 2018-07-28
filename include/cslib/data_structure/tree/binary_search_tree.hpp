@@ -23,7 +23,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <type_traits>
+#include <cslib/data_structure/stack.hpp>
+
+#include <utility>
 
 namespace cslib {
 namespace data_structure
@@ -43,11 +45,19 @@ namespace data_structure
 	class binary_search_tree
 	{
 	public:
+		struct inorder_iterator;
+		struct preorder_iterator;
+		struct postorder_iterator;
+
+	public:
 		using value_type			= ValueT;
 		using key_type				= KeyT;
 		using pointer				= value_type*;
 		using const_pointer			= const value_type*;
 		using reference				= value_type&;
+		using const_reference		= const value_type&;
+		using iterator				= inorder_iterator;
+		using const_iterator		= const inorder_iterator;
 
 	private:
 		using key_passing_type		= typename std::conditional<std::is_fundamental<value_type>::value, key_type, const key_type&>::type;
@@ -55,12 +65,10 @@ namespace data_structure
 
 		struct bst_node
 		{
-			key_type		_key;
-			value_type		_value;
-
-			bst_node*		_parent;
-			bst_node*		_left_child;
-			bst_node*		_right_child;
+			std::pair<key_type, value_type>		_key_value;
+			bst_node*							_parent;
+			bst_node*							_left_child;
+			bst_node*							_right_child;
 
 		public:
 			bst_node(
@@ -69,8 +77,7 @@ namespace data_structure
 					bst_node* parent = nullptr,
 					bst_node* left_child = nullptr,
 					bst_node* right_child = nullptr)
-				:	_key(key),
-					_value(value),
+				:	_key_value(key, value),
 					_parent(parent),
 					_left_child(left_child),
 					_right_child(right_child)
@@ -85,11 +92,17 @@ namespace data_structure
 			:	_root(nullptr)
 		{ }
 
-		reference at(key_passing_type key)
+		reference at(key_passing_type key) const
 		{
 			bst_node* node = find_node_in_subtree(_root, key);
-			return node->_value;
+			return node->_key_value.second;
 		}
+
+		reference operator[](key_passing_type key) const
+		{ return at(key); }
+
+		iterator begin() const;
+		iterator end() const;
 
 		void insert(key_passing_type key, value_passing_type value)
 		{
@@ -103,13 +116,13 @@ namespace data_structure
 
 			while (true)
 			{
-				if (current->_key == key)
+				if (current->_key_value.first == key)
 				{
-					current->_value = value;
+					current->_key_value.second = value;
 					return;
 				}
 
-				if (current->_key > key)
+				if (current->_key_value.first > key)
 				{
 					if (!current->_left_child)
 					{
@@ -136,15 +149,15 @@ namespace data_structure
 		{ remove_node_from_subtree(_root, key); }
 
 	private:
-		bst_node* find_node_in_subtree(bst_node* subtree_root, key_passing_type key)
+		bst_node* find_node_in_subtree(bst_node* subtree_root, key_passing_type key) const
 		{
 			bst_node* current = subtree_root;
 			while (current)
 			{
-				if (current->_key == key)
+				if (current->_key_value.first == key)
 					break;
 
-				if (current->_key > key)
+				if (current->_key_value.first > key)
 					current = current->_left_child;
 				else
 					current = current->_right_child;
@@ -193,15 +206,72 @@ namespace data_structure
 						break;
 				}
 
-				node_to_remove->_key = min_node_in_right_subtree->_key;
-				node_to_remove->_value = min_node_in_right_subtree->_value;
+				node_to_remove->_key_value = min_node_in_right_subtree->_key_value;
 
-				remove_node_from_subtree(node_to_remove->_right_child, node_to_remove->_key);
+				remove_node_from_subtree(node_to_remove->_right_child, node_to_remove->_key_value.first);
 				break;
 			}
 			}
 		}
 	};
+
+
+	template < typename KeyT, typename ValueT >
+	struct binary_search_tree<KeyT, ValueT>::inorder_iterator : public std::iterator<std::forward_iterator_tag, std::pair<KeyT, ValueT> >
+	{
+	public:
+		using value_type	= std::pair<KeyT, ValueT>;
+		using reference		= value_type&;
+
+	private:
+		stack<bst_node*>	_stack;
+
+	public:
+		explicit inorder_iterator(bst_node* root)
+		{
+			bst_node* current = root;
+			while (current)
+			{
+				_stack.push(current);
+				current = current->_left_child;
+			}
+		}
+
+		inorder_iterator& operator++()
+		{
+			bst_node* current = _stack.top();
+			_stack.pop();
+
+			if (current->_right_child)
+			{
+				current = current->_right_child;
+				while (current)
+				{
+					_stack.push(current);
+					current = current->_left_child;
+				}
+			}
+
+			return *this;
+		}
+
+		inorder_iterator operator++(int)
+		{ return ++(*this); }
+
+		bool operator==(inorder_iterator other) const	{ return _stack == other._stack; }
+		bool operator!=(inorder_iterator other) const	{ return _stack != other._stack; }
+		reference operator*()							{ return _stack.top()->_key_value; }
+	};
+
+
+	template < typename KeyT, typename ValueT >
+	typename binary_search_tree<KeyT, ValueT>::iterator binary_search_tree<KeyT, ValueT>::begin() const
+	{ return iterator(_root); }
+
+
+	template < typename KeyT, typename ValueT >
+	typename binary_search_tree<KeyT, ValueT>::iterator binary_search_tree<KeyT, ValueT>::end() const
+	{ return iterator(nullptr); }
 
 }}
 
