@@ -23,6 +23,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <type_traits>
+
 namespace cslib {
 namespace data_structure
 {
@@ -35,10 +37,6 @@ namespace data_structure
 	 * - Deletion: O(log(n))
 	 *
 	 * Space complexity: O(n)
-	 *
-	 * Interesting fact: this is implementation of not self-balancing tree.
-	 *
-	 * TODO: implement
 	 */
 
 	template < typename KeyT, typename ValueT >
@@ -47,27 +45,109 @@ namespace data_structure
 	public:
 		using value_type			= ValueT;
 		using key_type				= KeyT;
-		using pointer				= ValueT*;
-		using const_pointer			= const ValueT*;
-		using reference				= ValueT&;
+		using pointer				= value_type*;
+		using const_pointer			= const value_type*;
+		using reference				= value_type&;
 
 	private:
-		using KeyPassingT	= typename std::conditional<std::is_fundamental<KeyT>::value, KeyT, const KeyT&>::type;
-		using ValuePassingT	= typename std::conditional<std::is_fundamental<ValueT>::value, ValueT, const ValueT&>::type;
+		using key_passing_type		= typename std::conditional<std::is_fundamental<value_type>::value, key_type, const key_type&>::type;
+		using value_passing_type	= typename std::conditional<std::is_fundamental<value_type>::value, value_type, const value_type&>::type;
 
-		struct binary_tree_node
+		struct bst_node
 		{
-			KeyT	Key;
-			ValueT	Value;
+			key_type		_key;
+			value_type		_value;
+
+			bst_node*		_left_child;
+			bst_node*		_right_child;
+
+		public:
+			bst_node(
+					key_passing_type key,
+					value_passing_type value,
+					bst_node* left_child = nullptr,
+					bst_node* right_child = nullptr)
+				:	_key(key),
+					_value(value),
+					_left_child(left_child),
+					_right_child(right_child)
+			{ }
 		};
 
 	private:
-		binary_tree_node*	_root;
+		bst_node*	_root;
 
 	public:
-		reference at(KeyPassingT key);
-		void insert(KeyPassingT key, ValuePassingT value);
-		void remove(KeyPassingT key);
+		binary_search_tree()
+			:	_root(nullptr)
+		{ }
+
+		reference at(key_passing_type key)
+		{
+			bst_node* node = find_node(key);
+			return node->_value;
+		}
+
+		void insert(key_passing_type key, value_passing_type value)
+		{
+			if (!_root)
+			{
+				_root = new bst_node(key, value);
+				return;
+			}
+
+			bst_node* current = _root;
+
+			while (true)
+			{
+				if (current->_key == key)
+				{
+					current->_value = value;
+					return;
+				}
+
+				if (current->_key > key)
+				{
+					if (!current->_left_child)
+					{
+						current->_left_child = new bst_node(key, value);
+						return;
+					}
+					else
+						current = current->_left_child;
+				}
+				else
+				{
+					if (!current->_right_child)
+					{
+						current->_right_child = new bst_node(key, value);
+						return;
+					}
+					else
+						current = current->_right_child;
+				}
+			}
+		}
+
+		void remove(key_passing_type key);
+
+	private:
+		bst_node* find_node(key_passing_type key)
+		{
+			bst_node* current = _root;
+			while (current)
+			{
+				if (current->_key == key)
+					break;
+
+				if (current->_key > key)
+					current = current->_right_child;
+				else
+					current = current->_left_child;
+			}
+
+			return current;
+		}
 	};
 
 }}

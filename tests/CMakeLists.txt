@@ -6,6 +6,7 @@ SET(SOURCES
 
 	algorithm/insertion_sort.cpp
 
+	data_structure/binary_search_tree.cpp
 	data_structure/dynamic_array.cpp
 	data_structure/stack.cpp
 )
