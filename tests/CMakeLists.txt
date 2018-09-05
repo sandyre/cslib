@@ -4,6 +4,7 @@ SET(SOURCES
 	algorithm/binary_search.cpp
 	algorithm/linear_search.cpp
 
+	algorithm/hash.cpp
 	algorithm/insertion_sort.cpp
 	algorithm/maximum_subarray.cpp
 	algorithm/tree_sort.cpp
