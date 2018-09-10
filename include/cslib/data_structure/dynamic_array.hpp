@@ -23,9 +23,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <cslib/algorithm/for_each.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <initializer_list>
+#include <memory>
 #include <stdexcept>
 
 namespace cslib {
@@ -49,6 +53,7 @@ namespace data_structure
 	{
 	public:
 		using value_type			= ValueT;
+		using allocator				= std::allocator<value_type>;
 		using pointer				= ValueT*;
 		using const_pointer			= const ValueT*;
 		using reference				= ValueT&;
@@ -58,60 +63,36 @@ namespace data_structure
 		using size_type				= size_t;
 
 	private:
-		using PassingValueT = typename std::conditional<std::is_fundamental<value_type>::value, value_type, const value_type&>::type;
-		using StorageT = char;
-		using StoragePointerT = StorageT*;
-
-	private:
-		StoragePointerT	_storage;
-		size_type		_capacity;
-		size_type		_size;
+		allocator						_allocator;
+		typename allocator::pointer		_data;
+		size_type						_capacity;
+		size_type						_size;
 
 	public:
-		dynamic_array()
-			:	_storage(new StorageT(4 * sizeof(value_type))),
-				_capacity(4),
-				_size()
-		{ }
+		dynamic_array();
+		explicit dynamic_array(size_type initial_size);
+		dynamic_array(size_type initial_size, const value_type& filler);
+		dynamic_array(const dynamic_array& other);
+		dynamic_array(dynamic_array&& other);
+		dynamic_array(std::initializer_list<value_type> value);
 
-		explicit dynamic_array(size_t initialSize, PassingValueT filler = value_type())
-			:	_storage(new StorageT[initialSize * sizeof(value_type)]),
-				_capacity(initialSize),
-				_size(initialSize)
-		{ std::fill(begin(), end(), filler); }
+		~dynamic_array() noexcept;
 
-		~dynamic_array()
-		{ clear(); }
+		void push_back(const value_type& value);
+		void pop_back() noexcept;
 
-		void push_back(PassingValueT value)
-		{
-			ensure_capacity(_size + 1);
-			new(_storage + size() * sizeof(value_type)) value_type(value);
-			++_size;
-		}
+		reference front() noexcept;
+		reference back() noexcept;
 
-		void pop_back()
-		{
-			reinterpret_cast<pointer>(_storage[size() - 1 * sizeof(value_type)])->~value_type();
-			--_size;
-		}
+		reference at(size_type index) noexcept;
+		reference operator[](size_type index) noexcept;
 
-		reference front()	{ return at(0); }
-		reference back()	{ return at(size() - 1); }
+		iterator begin() const noexcept;
+		iterator end() const noexcept;
+		const_iterator cbegin() const noexcept;
+		const_iterator cend() const noexcept;
 
-		reference at(size_type index)			{ return *reinterpret_cast<pointer>(_storage + index * sizeof(value_type)); }
-		reference operator[](size_type index)	{ return at(index); }
-
-		iterator begin() const			{ return reinterpret_cast<iterator>(_storage); }
-		iterator end() const			{ return reinterpret_cast<iterator>(_storage + size() * sizeof(value_type)); }
-		const_iterator cbegin() const	{ return begin(); }
-		const_iterator cend() const		{ return end(); }
-
-		void clear()
-		{
-			_size = 0;
-			std::for_each(begin(), end(), std::bind(&dynamic_array::destructor_caller, this, std::placeholders::_1));
-		}
+		void clear() noexcept;
 
 		size_type size() const		{ return _size; }
 		size_type capacity() const	{ return _capacity; }
@@ -129,24 +110,154 @@ namespace data_structure
 		{ return !operator==(other); }
 
 	private:
-		void ensure_capacity(size_t newSize)
+		void ensure_capacity(size_type new_size)
 		{
-			if (newSize >= _capacity)
+			if (new_size >= _capacity)
 			{
-				const size_type newCapacity = _capacity * static_cast<size_type>(std::ceil(std::log2(newSize / _capacity)));
-				StoragePointerT newStorage = new StorageT[newCapacity];
-				std::move(_storage, _storage + _size * sizeof(value_type), newStorage);
-				delete [] _storage;
+				size_type new_capacity = 1;
+				if (new_size && !(new_size & (new_size - 1)))
+					new_capacity = new_size;
+				else
+					while (new_capacity < new_size)
+						new_capacity <<= 1;
 
-				_storage = newStorage;
-				_capacity = newCapacity;
-				_size = newSize;
+				typename allocator::pointer new_storage = std::allocator_traits<allocator>::allocate(_allocator, new_capacity);
+				std::copy(_data, _data + size(), new_storage);
+
+				algorithm::for_each_iterator(begin(), end(), [&](pointer ptr) { std::allocator_traits<allocator>::destroy(_allocator, ptr); });
+				std::allocator_traits<allocator>::deallocate(_allocator, _data, _capacity);
+
+				_data = new_storage;
+				_capacity = new_capacity;
+				_size = new_size;
 			}
 		}
 
-		void destructor_caller(value_type& element)
-		{ element.~value_type(); }
+		void dtor_call_helper(pointer* ptr)
+		{ std::allocator_traits<allocator>::destroy(_allocator, ptr); }
 	};
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array()
+		:	_data(std::allocator_traits<dynamic_array::allocator>::allocate(_allocator, 4)),
+			_capacity(4),
+			_size()
+	{ }
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array(size_type initial_size)
+		:	_data(std::allocator_traits<allocator>::allocate(_allocator, initial_size)),
+			_capacity(initial_size),
+			_size(initial_size)
+	{ algorithm::for_each_iterator(begin(), end(), [&](pointer ptr) { std::allocator_traits<allocator>::construct(_allocator, ptr); }); }
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array(size_type initial_size, const value_type& filler)
+		:	_data(std::allocator_traits<allocator>::allocate(_allocator, initial_size)),
+			_capacity(initial_size),
+			_size(initial_size)
+	{ algorithm::for_each_iterator(begin(), end(), std::bind(&std::allocator_traits<allocator>::construct, std::ref(_allocator), std::placeholders::_1, filler)); }
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array(const dynamic_array& other)
+		:	_data(std::allocator_traits<allocator>::allocate(_allocator, other._size)),
+			_capacity(other._size),
+			_size(other._size)
+	{ std::copy(other.begin(), other.end(), begin()); }
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array(dynamic_array&& other)
+		:	_allocator(other._allocator),
+			_data(other._data),
+			_capacity(other._capacity),
+			_size(other._size)
+	{
+		other._data = nullptr;
+		other._capacity = 0;
+		other._size = 0;
+	}
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::dynamic_array(std::initializer_list<value_type> value)
+		:	_data(std::allocator_traits<allocator>::allocate(_allocator, value.size())),
+			_capacity(value.size()),
+			_size(value.size())
+	{ std::copy(value.begin(), value.end(), begin()); }
+
+
+	template < typename ValueT >
+	dynamic_array<ValueT>::~dynamic_array() noexcept
+	{
+		clear();
+		std::allocator_traits<allocator>::deallocate(_allocator, _data, _capacity);
+	}
+
+
+	template < typename ValueT >
+	void dynamic_array<ValueT>::push_back(const value_type& value)
+	{
+		ensure_capacity(_size + 1);
+		std::allocator_traits<allocator>::construct(_allocator, end(), value);
+		++_size;
+	}
+
+
+	template < typename ValueT >
+	void dynamic_array<ValueT>::pop_back() noexcept
+	{
+		std::allocator_traits<allocator>::destroy(_allocator, end() - 1);
+		--_size;
+	}
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::reference dynamic_array<ValueT>::front() noexcept
+	{ return at(0); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::reference dynamic_array<ValueT>::back() noexcept
+	{ return at(size() - 1); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::reference dynamic_array<ValueT>::at(size_type index) noexcept
+	{ return *(_data + index); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::reference dynamic_array<ValueT>::operator[](size_type index) noexcept
+	{ return at(index); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::iterator dynamic_array<ValueT>::begin() const noexcept
+	{ return _data; }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::iterator dynamic_array<ValueT>::end() const noexcept
+	{ return _data + size(); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::const_iterator dynamic_array<ValueT>::cbegin() const noexcept
+	{ return begin(); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::const_iterator dynamic_array<ValueT>::cend() const noexcept
+	{ return end(); }
+
+
+	template < typename ValueT >
+	void dynamic_array<ValueT>::clear() noexcept
+	{ algorithm::for_each_iterator(begin(), end(), [&](pointer ptr) { std::allocator_traits<allocator>::destroy(_allocator, ptr); }); }
 
 }}
 
