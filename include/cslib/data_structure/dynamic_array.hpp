@@ -94,20 +94,9 @@ namespace data_structure
 
 		void clear() noexcept;
 
-		size_type size() const		{ return _size; }
-		size_type capacity() const	{ return _capacity; }
-		bool empty() const			{ return !size(); }
-
-		bool operator==(const dynamic_array& other) const
-		{
-			if (size() != other.size())
-				return false;
-
-			return std::equal(begin(), end(), other.begin());
-		}
-
-		bool operator!=(const dynamic_array& other) const
-		{ return !operator==(other); }
+		size_type size() const noexcept;
+		size_type capacity() const noexcept;
+		bool empty() const noexcept;
 
 	private:
 		void ensure_capacity(size_type new_size)
@@ -132,9 +121,6 @@ namespace data_structure
 				_size = new_size;
 			}
 		}
-
-		void dtor_call_helper(pointer* ptr)
-		{ std::allocator_traits<allocator>::destroy(_allocator, ptr); }
 	};
 
 
@@ -258,6 +244,36 @@ namespace data_structure
 	template < typename ValueT >
 	void dynamic_array<ValueT>::clear() noexcept
 	{ algorithm::for_each_iterator(begin(), end(), [&](pointer ptr) { std::allocator_traits<allocator>::destroy(_allocator, ptr); }); }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::size_type dynamic_array<ValueT>::size() const noexcept
+	{ return _size; }
+
+
+	template < typename ValueT >
+	typename dynamic_array<ValueT>::size_type dynamic_array<ValueT>::capacity() const noexcept
+	{ return _capacity; }
+
+
+	template < typename ValueT >
+	bool dynamic_array<ValueT>::empty() const noexcept
+	{ return !size(); }
+
+
+	template < typename ValueT >
+	bool operator==(const dynamic_array<ValueT>& lhs, const dynamic_array<ValueT>& rhs)
+	{
+		if (lhs.size() != rhs.size())
+			return false;
+
+		return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+	}
+
+
+	template < typename ValueT >
+	bool operator!=(const dynamic_array<ValueT>& lhs, const dynamic_array<ValueT>& rhs)
+	{ return !(lhs == rhs); }
 
 }}
 
