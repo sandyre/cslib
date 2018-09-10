@@ -118,7 +118,6 @@ namespace data_structure
 
 				_data = new_storage;
 				_capacity = new_capacity;
-				_size = new_size;
 			}
 		}
 	};
