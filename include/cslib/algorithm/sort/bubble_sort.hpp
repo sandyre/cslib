@@ -37,11 +37,18 @@ namespace algorithm
 	 *
 	 * Interesting fact:
 	 * If CompareT::operator() does strong check (i.e. < OR >), this algorithm is stable. Overwise it's not.
-	 *
-	 * TODO: iterator must be RandomAccessIterator, add this check
 	 */
 
-	template < typename IteratorT, typename CompareT = std::less<typename std::iterator_traits<IteratorT>::value_type> >
+	template <
+			typename IteratorT,
+			typename CompareT = std::less<typename std::iterator_traits<IteratorT>::value_type> >,
+			typename = typename std::enable_if<
+				std::is_convertible<
+						typename std::iterator_traits<IteratorT>::iterator_category,
+						typename std::random_access_iterator_tag
+				>::value
+			>::type
+	>
 	void bubble_sort(IteratorT first, IteratorT last, CompareT compare = CompareT())
 	{
 		for (IteratorT iIter = first; iIter != last; ++iIter)
