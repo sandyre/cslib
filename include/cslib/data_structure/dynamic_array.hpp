@@ -144,7 +144,7 @@ namespace data_structure
 		:	_data(std::allocator_traits<allocator>::allocate(_allocator, initial_size)),
 			_capacity(initial_size),
 			_size(initial_size)
-	{ algorithm::for_each_iterator(begin(), end(), std::bind(&std::allocator_traits<allocator>::construct, std::ref(_allocator), std::placeholders::_1, filler)); }
+	{ algorithm::for_each_iterator(begin(), end(), [&](pointer ptr) { std::allocator_traits<allocator>::construct(_allocator, ptr, filler); }); }
 
 
 	template < typename ValueT >
