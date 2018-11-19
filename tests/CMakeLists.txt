@@ -5,6 +5,7 @@ SET(SOURCES
 	algorithm/linear_search.cpp
 	algorithm/kmp_search.cpp
 
+	algorithm/hash.cpp
 	algorithm/insertion_sort.cpp
 	algorithm/maximum_subarray.cpp
 	algorithm/tree_sort.cpp
